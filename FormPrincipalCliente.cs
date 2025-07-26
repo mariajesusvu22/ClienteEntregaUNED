@@ -1,64 +1,62 @@
 ﻿// ========================================================
-// Universidad Estatal a Distancia (UNED)
-// II Cuatrimestre 2025 – Programación Avanzada con C#
-// Proyecto 2: ClienteEntrega
+// UNED - II Cuatrimestre 2025 
+// Proyecto 2: ENTREGAS S.A. – ServidorEntrega
 // Formulario: FormPrincipalCliente.cs
 // Estudiante: María Jesús Venegas Ugalde
-// Descripción: Formulario principal del cliente para
-// realizar pedidos y consultarlos.
+// Fecha: 21/07/2025
 // ========================================================
 
-using Servidor.Entidad;          // Para usar Cliente, Articulo, DetallePedido
-using System;
-using System.Collections.Generic;
-using System.Net.Sockets;
-using System.Windows.Forms;
+// Descripción: Formulario principal del cliente para realizar pedidos y consultarlos.
+
+using Servidor.Entidad; // Para usar Cliente, Articulo, DetallePedido
+using System; // Funcionalidades básicas
+using System.Collections.Generic; // Para usar listas
+using System.Net.Sockets; // Para comunicación por red (TCP)
+using System.Windows.Forms; // Controles visuales
 
 namespace ClienteEntrega
 {
     public partial class FormPrincipalCliente : Form
-
-
     {
         // ============================================
         // Campo privado para guardar cliente logueado
         // ============================================
-        private Cliente clienteLogueado;
+        private Cliente clienteLogueado; // Almacena la información del cliente que inició sesión
 
-        // =======================================================
+        // ==============================================
         // Constructor que recibe al cliente autenticado
-        // =======================================================
+        // ==============================================
         public FormPrincipalCliente(Cliente cliente)
         {
-            InitializeComponent();
-            clienteLogueado = cliente; // Se guarda el cliente para uso en el formulario
+            InitializeComponent(); // Inicializa los componentes visuales del diseñador
+            clienteLogueado = cliente; // Se guarda el cliente para uso en el resto del formulario
         }
 
-        // =======================================================
+        // =================================================================
         // Evento que se ejecuta al cargar el formulario
         // Carga los artículos disponibles y muestra el nombre del cliente
-        // =======================================================
+        // =================================================================
         private void FormPrincipalCliente_Load(object sender, EventArgs e)
         {
             try
             {
-                // Habilitar generación automática de columnas en el DataGridView
+                // Permite que el DataGridView cree sus columnas a partir de la fuente de datos
                 dgvDetallesArticulo.AutoGenerateColumns = true;
 
-                // Mostrar nombre del cliente en la etiqueta
+                // Muestra un mensaje de bienvenida personalizado con el nombre del cliente
                 lblBienvenida.Text = "Bienvenido: " + clienteLogueado.Nombre + " " + clienteLogueado.PrimerApellido + " " + clienteLogueado.SegundoApellido;
 
-                // Obtener lista de artículos activos desde el servidor
+                // Obtiene la lista de artículos disponibles desde el servidor a través de la red
                 List<Articulo> articulos = ClienteTCP.ObtenerArticulosDisponibles();
 
+                // Configuración del ComboBox de artículos
+                cboArticulo.DataSource = null; // Limpia cualquier fuente de datos anterior para evitar errores
+                cboArticulo.DataSource = articulos; // Asigna la lista de artículos como origen de datos
+                cboArticulo.DisplayMember = "Nombre"; // Muestra el nombre del artículo en la lista desplegable
+                cboArticulo.ValueMember = "Id"; // Usa el ID del artículo como valor interno
+                cboArticulo.DropDownStyle = ComboBoxStyle.DropDownList; // Impide que el usuario escriba manualmente en el ComboBox
 
-                cboArticulo.DataSource = null;           // Limpia cualquier fuente anterior
-                cboArticulo.DataSource = articulos;      // Asigna la lista como origen
-                cboArticulo.DisplayMember = "Nombre";    // Muestra el nombre del artículo
-                cboArticulo.ValueMember = "Id";          // Internamente maneja el ID
-                cboArticulo.DropDownStyle = ComboBoxStyle.DropDownList; // Impide escritura manual
-
-                // Opcional: seleccionar el primer artículo si hay al menos uno
+                // Si la lista de artículos no está vacía, selecciona el primer elemento
                 if (cboArticulo.Items.Count > 0)
                 {
                     cboArticulo.SelectedIndex = 0;
@@ -66,7 +64,7 @@ namespace ClienteEntrega
             }
             catch (Exception ex)
             {
-                // Muestra error si algo falla
+                // Muestra un mensaje de error si falla la carga inicial
                 MessageBox.Show("Error al cargar artículos: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
@@ -79,50 +77,51 @@ namespace ClienteEntrega
         {
             try
             {
-                // Consulta el artículo específico al servidor
+                // Consulta al servidor el artículo específico por su ID
                 Articulo articulo = ClienteTCP.ConsultarArticuloPorId(id);
 
-
-                // Si lo encuentra
+                // Si se encontró el artículo, lo muestra en la tabla
                 if (articulo != null)
                 {
-                    // Se crea una lista de un solo artículo para asignar al DataGridView
+                    // Se crea una lista que contiene solo el artículo encontrado
                     List<Articulo> detalle = new List<Articulo> { articulo };
 
-                    // Limpia columnas existentes antes de asignar nuevo DataSource
+                    // Limpia las columnas existentes para evitar que se acumulen
                     dgvDetallesArticulo.Columns.Clear();
 
+                    // Se asigna al DataGridView una lista de objetos anónimos con el formato deseado
                     dgvDetallesArticulo.DataSource = detalle.Select(a => new
                     {
                         ID = a.Id,
                         Nombre = a.Nombre,
-                        Tipo = a.TipoArticulo.Nombre, // Así mostramos el nombre del tipo
+                        Tipo = a.TipoArticulo.Nombre, // Accede al nombre del tipo de artículo
                         Disponible = a.Inventario,
                         Valor = a.Valor
                     }).ToList();
-
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al cargar detalle: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Error al cargar detalle del artículo: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-
-        // =======================================================
+        // =================================================
         // Evento cuando el usuario selecciona un artículo
         // Actualiza el inventario disponible en pantalla
-        // =======================================================
+        // =================================================
         private void cboArticulo_SelectedIndexChanged(object sender, EventArgs e)
         {
+            // Valida que haya un artículo seleccionado
             if (cboArticulo.SelectedItem != null)
             {
+                // Obtiene el objeto Articulo completo del ítem seleccionado
                 Articulo seleccionado = (Articulo)cboArticulo.SelectedItem;
+                // Muestra la cantidad de inventario disponible en una etiqueta
                 lblDisponible.Text = seleccionado.Inventario.ToString();
 
-            // Mostrar detalle en dgvDetallesArticulo
-            MostrarDetalleArticulo(seleccionado.Id);
+                // Llama al método para mostrar todos los detalles del artículo en su tabla
+                MostrarDetalleArticulo(seleccionado.Id);
             }
         }
 
@@ -134,77 +133,71 @@ namespace ClienteEntrega
         {
             try
             {
-                // Validar que se haya seleccionado un artículo
+                // Validaciones de los campos del formulario
                 if (cboArticulo.SelectedItem == null)
                     throw new Exception("Debe seleccionar un artículo.");
-
-                // Validar que la cantidad sea número y mayor que 0
                 if (!int.TryParse(txtCantidad.Text, out int cantidad) || cantidad <= 0)
                     throw new Exception("La cantidad debe ser un número mayor a 0.");
 
-                // Obtener artículo seleccionado
+                // Obtiene el artículo seleccionado para las validaciones
                 Articulo art = (Articulo)cboArticulo.SelectedItem;
 
-                // Validar que haya suficiente inventario
                 if (cantidad > art.Inventario)
                     throw new Exception("No hay suficiente inventario disponible.");
-
-                // Validar que se haya ingresado una dirección
                 if (string.IsNullOrWhiteSpace(txtDireccion.Text))
                     throw new Exception("Debe ingresar la dirección para el pedido.");
-
-                // Validar que la fecha del pedido no sea anterior a hoy
                 if (dtpFecha.Value.Date < DateTime.Today)
                     throw new Exception("La fecha del pedido no puede ser anterior a hoy.");
 
-
-                // Obtener valores faltantes
+                // Obtiene los datos restantes del formulario
                 string direccion = txtDireccion.Text.Trim();
                 DateTime fecha = dtpFecha.Value;
 
-                // Enviar al servidor usando TCP y obtener respuesta
-                string respuesta = ClienteTCP.EnviarDetalleTexto(Convert.ToInt32(ClienteLogueado.Identificacion), direccion, art.Id, fecha, cantidad);
+                // Envía los datos del pedido al servidor y espera una respuesta
+                string respuesta = ClienteTCP.EnviarDetalleTexto(Convert.ToInt32(clienteLogueado.Identificacion), direccion, art.Id, fecha, cantidad);
 
+                // Si la respuesta del servidor indica éxito
                 if (respuesta.StartsWith("OK"))
                 {
                     MessageBox.Show("Pedido realizado correctamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                    // Actualizar inventario local
+                    // Actualiza el inventario en la vista del cliente
                     art.Inventario -= cantidad;
                     lblDisponible.Text = art.Inventario.ToString();
-                    txtCantidad.Clear();
+                    txtCantidad.Clear(); // Limpia el campo de cantidad
                 }
-                else
+                else // Si el servidor devolvió un error
                 {
                     MessageBox.Show("Error: " + respuesta, "Error del servidor", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
-
             }
             catch (Exception ex)
             {
+                // Muestra errores de validación o de otro tipo
                 MessageBox.Show("Error: " + ex.Message, "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 
-        // =======================================================
+        // =================================================
         // Evento al hacer clic en "Consultar mis pedidos"
         // Muestra los pedidos realizados por el cliente
-        // =======================================================
+        // =================================================
         private void btnConsultar_Click(object sender, EventArgs e)
         {
             try
             {
-                // Consulta la lista de pedidos realizados por el cliente actual
+                // Solicita al servidor la lista de pedidos del cliente logueado
                 List<DetallePedido> detalles = ClienteTCP.ConsultarPedidos(clienteLogueado.Identificacion.ToString());
 
+                // Si no hay pedidos, muestra un mensaje informativo
                 if (detalles.Count == 0)
                 {
                     MessageBox.Show("No tiene pedidos registrados.", "Consulta", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    dgvPedidos.DataSource = null; // Limpia el grid
+                    dgvPedidos.DataSource = null; // Limpia la tabla
                     return;
                 }
 
-                // Convertimos la lista a un formato anónimo legible para mostrar
+                // Convierte la lista a un formato anónimo para mostrar solo las columnas deseadas
                 var datosParaMostrar = detalles.Select(d => new
                 {
                     Pedido = d.NumeroPedido,
@@ -213,25 +206,24 @@ namespace ClienteEntrega
                     Cantidad = d.Cantidad
                 }).ToList();
 
-                // Mostramos en el grid
+                // Asigna la lista formateada a la tabla para mostrarla
                 dgvPedidos.DataSource = datosParaMostrar;
-
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al consultar pedidos: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Error al consultar sus pedidos: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        // ====================================================================
+        // ========================================================
         // Evento al hacer clic en "Consultar por ID"
         // Muestra un pedido específico según el número ingresado
-        // ====================================================================
+        // ========================================================
         private void btnConsultarPorId_Click(object sender, EventArgs e)
         {
             try
             {
-                // Validar que se escribió algo en el cuadro de texto
+                // Valida que el campo de texto para el ID no esté vacío
                 if (string.IsNullOrWhiteSpace(txtIdPedido.Text))
                 {
                     MessageBox.Show("Debe digitar el número del pedido que desea consultar.", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -239,7 +231,7 @@ namespace ClienteEntrega
                     return;
                 }
 
-                // Intentar convertir el texto a número entero (ID del pedido)
+                // Valida que el texto ingresado sea un número válido
                 if (!int.TryParse(txtIdPedido.Text.Trim(), out int idPedido))
                 {
                     MessageBox.Show("El ID del pedido debe ser un número válido.", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -247,10 +239,10 @@ namespace ClienteEntrega
                     return;
                 }
 
-                // Enviar la solicitud al servidor para consultar el pedido con ese ID
+                // Envía la solicitud al servidor para consultar un pedido por su ID
                 List<DetallePedido> resultado = ClienteTCP.ConsultarPedidoPorId(idPedido);
 
-                // Verificar si la lista está vacía o vino como null desde el servidor
+                // Si el servidor no devuelve nada, informa al usuario
                 if (resultado == null || resultado.Count == 0)
                 {
                     MessageBox.Show("No se encontró ningún pedido con ese ID.", "Consulta", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -258,7 +250,7 @@ namespace ClienteEntrega
                     return;
                 }
 
-                // Crear una lista anónima para mostrar en el DataGridView
+                // Formatea la lista de resultados para mostrarla en la tabla
                 var datosParaMostrar = resultado.Select(d => new
                 {
                     Pedido = d.NumeroPedido,
@@ -267,17 +259,15 @@ namespace ClienteEntrega
                     Cantidad = d.Cantidad
                 }).ToList();
 
-                // Asignar los datos al DataGridView
+                // Asigna los datos a la tabla
                 dgvPedidos.DataSource = datosParaMostrar;
             }
             catch (Exception ex)
             {
-                // Mostrar cualquier error que ocurra
+                // Muestra cualquier error que ocurra durante la consulta
                 MessageBox.Show("Error al consultar el pedido: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 dgvPedidos.DataSource = null;
             }
         }
-
-
     }
 }

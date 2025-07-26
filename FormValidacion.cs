@@ -4,37 +4,37 @@
 // Proyecto 2: ClienteEntrega
 // Formulario: FormValidacion.cs
 // Estudiante: María Jesús Venegas Ugalde
-// Descripción: Permite validar el número de identificación
-// del cliente antes de permitir hacer pedidos.
+// Fecha: 21/07/2025
 // ========================================================
 
-using System;
-using System.Windows.Forms;
-using System.Drawing;                    // Para usar colores en etiquetas
-using Servidor.Entidad;                 // Para usar la clase Cliente
-using ClienteEntrega;                   // Para ClienteTCP y ClienteLogueado
+// Descripción: Permite validar el número de identificación del cliente antes de permitir hacer pedidos.
+
+using System; // Funcionalidades básicas
+using System.Windows.Forms; // Controles visuales
+using System.Drawing; // Para usar colores en etiquetas
+using Servidor.Entidad; // Para usar la clase Cliente
+using ClienteEntrega; // Para ClienteTCP y ClienteLogueado
 
 namespace ClienteEntrega
 {
-
     public partial class FormValidacion : Form
     {
         // ================================================
         // Propiedad que almacena el cliente validado
         // ================================================
-        public Cliente ClienteValidado { get; private set; }
+        public Cliente ClienteValidado { get; private set; } // Guarda al cliente si la validación es exitosa
 
+        // Campo para mantener el estado de la conexión con el servidor
         private bool conectado;
-
 
         // ================================================
         // Constructor del formulario
         // ================================================
         public FormValidacion()
         {
-            InitializeComponent();           // Inicializa controles visuales
-            this.Load += FormValidacion_Load; // Asigna evento de carga
-            btnValidar.Enabled = false;       // Desactiva validación al inicio
+            InitializeComponent();   // Inicializa los controles visuales del diseñador
+            this.Load += FormValidacion_Load; // Asocia el evento Load al método correspondiente
+            btnValidar.Enabled = false;  // Deshabilita el botón de validar al inicio
         }
 
         // =========================================
@@ -42,37 +42,37 @@ namespace ClienteEntrega
         // =========================================
         private void btnValidar_Click(object sender, EventArgs e)
         {
-            // Verifica si hay conexión activa antes de continuar
+            // Verifica si hay una conexión activa antes de continuar
             if (!ClienteTCP.EstaConectado())
             {
                 MessageBox.Show("Debe conectarse al servidor antes de validar.", "Advertencia", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
+                return; // Detiene la ejecución del método
             }
 
-            // Obtiene la identificación digitada
+            // Obtiene la identificación digitada y quita espacios en blanco
             string id = txtIdentificacion.Text.Trim();
 
-            // Verifica que no esté vacío
+            // Verifica que el campo de identificación no esté vacío
             if (string.IsNullOrEmpty(id))
             {
                 MessageBox.Show("Debe ingresar su identificación.", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
+                return; // Detiene la ejecución del método
             }
 
-            // Solicita al servidor validar el cliente
+            // Llama a la capa de red para enviar la identificación al servidor
             Cliente cliente = ClienteTCP.ValidarCliente(id);
 
-            // Si no se encontró
+            // Si el servidor no devuelve un cliente (identificación no encontrada o inactiva)
             if (cliente == null)
             {
                 MessageBox.Show("Identificación inválida o cliente inactivo.", "Acceso denegado", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
+                return; // Detiene la ejecución del método
             }
 
-            // Si se validó correctamente, se guarda y se cierra el formulario
-            ClienteValidado = cliente;
-            ClienteLogueado.Identificacion = cliente.Identificacion.ToString();
-            this.DialogResult = DialogResult.OK;
+            // Si la validación es exitosa, se guarda el cliente y se cierra el formulario
+            ClienteValidado = cliente; // Almacena el cliente validado en la propiedad pública
+            ClienteLogueado.Identificacion = cliente.Identificacion.ToString(); // Guarda el ID para futuras consultas
+            this.DialogResult = DialogResult.OK; // Establece el resultado del formulario como "OK"
         }
 
         // ===================================================
@@ -81,47 +81,47 @@ namespace ClienteEntrega
         // ===================================================
         private void ActualizarEstadoConexion()
         {
-
+            // Si la variable 'conectado' es verdadera
             if (conectado)
             {
-                lblEstadoConexion.Text = "Estado: Conectado";
-                lblEstadoConexion.ForeColor = Color.Green;
-                btnValidar.Enabled = true; // Habilita el botón Validar
+                lblEstadoConexion.Text = "Estado: Conectado"; // Actualiza el texto de la etiqueta
+                lblEstadoConexion.ForeColor = Color.Green; // Cambia el color del texto a verde
+                btnValidar.Enabled = true; // Habilita el botón para validar
             }
-            else
+            else // Si 'conectado' es falso
             {
-                lblEstadoConexion.Text = "Estado: Desconectado";
-                lblEstadoConexion.ForeColor = Color.Red;
-                btnValidar.Enabled = false; // Desactiva el botón Validar
+                lblEstadoConexion.Text = "Estado: Desconectado"; // Actualiza el texto de la etiqueta
+                lblEstadoConexion.ForeColor = Color.Red; // Cambia el color del texto a rojo
+                btnValidar.Enabled = false; // Deshabilita el botón para validar
             }
         }
 
-        // ===================================================
+        // ==========================================
         // Evento al hacer clic en el botón Conectar
-        // ===================================================
+        // ==========================================
         private void btnConectar_Click(object sender, EventArgs e)
         {
-            conectado = ClienteTCP.Conectar();
-            ActualizarEstadoConexion(); // Intenta conectar y actualiza estado
+            conectado = ClienteTCP.Conectar(); // Intenta conectar al servidor y guarda el resultado (true/false)
+            ActualizarEstadoConexion(); // Actualiza la interfaz de usuario según el estado de la conexión
         }
 
-        // ===================================================
+        // ==============================================
         // Evento al hacer clic en el botón Desconectar
-        // ===================================================
+        // ==============================================
         private void btnDesconectar_Click(object sender, EventArgs e)
         {
-            ClienteTCP.Desconectar();             // Cierra conexión TCP
-            lblEstadoConexion.Text = "Estado: Desconectado";
-            lblEstadoConexion.ForeColor = Color.Red;
-            btnValidar.Enabled = false;           // Desactiva el botón Validar
+            ClienteTCP.Desconectar(); // Llama al método para cerrar la conexión TCP
+            lblEstadoConexion.Text = "Estado: Desconectado"; // Actualiza el texto de la etiqueta
+            lblEstadoConexion.ForeColor = Color.Red; // Cambia el color a rojo
+            btnValidar.Enabled = false; // Deshabilita el botón para validar
         }
 
-        // =====================================================
+        // ====================================================
         // Se ejecuta al cargar el formulario por primera vez
-        // =====================================================
+        // ====================================================
         private void FormValidacion_Load(object sender, EventArgs e)
         {
-            ActualizarEstadoConexion(); // Verifica si ya hay conexión al iniciar
+            ActualizarEstadoConexion(); // Verifica el estado de la conexión al iniciar el formulario
         }
     }
 }
