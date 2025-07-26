@@ -19,3 +19,4 @@ C:\Users\maria\Downloads\Programación Avanzada\ClienteEntrega\ClienteEntrega\ob
 C:\Users\maria\Downloads\Programación Avanzada\ClienteEntrega\ClienteEntrega\obj\Debug\net8.0-windows\ClienteEntrega.pdb
 C:\Users\maria\Downloads\Programación Avanzada\ClienteEntrega\ClienteEntrega\obj\Debug\net8.0-windows\ClienteEntrega.genruntimeconfig.cache
 C:\Users\maria\Downloads\Programación Avanzada\ClienteEntrega\ClienteEntrega\obj\Debug\net8.0-windows\ref\ClienteEntrega.dll
+C:\Users\maria\Downloads\Programación Avanzada\ClienteEntrega\ClienteEntrega\obj\Debug\net8.0-windows\ClienteEntrega.sourcelink.json
